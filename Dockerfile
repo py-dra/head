@@ -40,8 +40,6 @@ COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/pytho
 
 # Copy the application code
 COPY main.py .
-# Copy the .env file (you can secure this differently in production)
-COPY .env .
 
 # Expose the port (informative only, your hosting platform will handle the actual port mapping)
 EXPOSE 8000
