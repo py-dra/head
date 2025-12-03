@@ -38,6 +38,9 @@ WORKDIR /app
 # Copy installed packages from the builder stage
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
+# Copy uvicorn
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
+
 # Copy the application code
 COPY main.py .
 
