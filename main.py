@@ -4,28 +4,29 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.request import urlopen
 import requests
 import psutil
 from supabase import create_client, Client
 import uvicorn
+import asyncio
 
 load_dotenv()
 
-# URLs
-URL_CURRENT = os.environ["URL_CURRENT"]
+URL_CURRENT: str = os.environ["URL_CURRENT"]
 
 # SUPABASE
 url: str = os.environ["SUPABASE_URL"]
 key: str = os.environ["SUPABASE_KEY"]
+
 supabase: Client = create_client(url, key)
 supabase_response = (supabase.table("servers").select("*").execute())
 sb_servers = supabase_response.model_dump()
 
 
-
 response_ipinfo =  urlopen("https://ipinfo.io/json")
+
 
 app = FastAPI()
 
@@ -100,6 +101,25 @@ def read_me():
         }
     }
     return me
+
+
+@app.get("/is_active")
+async def execute_ping():
+    data, count = (supabase.table("servers").update({
+        "is_active": True,
+        "last_ping_at": "now()" 
+        }).eq("url", URL_CURRENT).execute())
+    return data, count
+
+
+@app.on_event("startup")
+async def start_scheduled_loop():
+    async def scheduled_ping_loop():
+        while True:
+            await execute_ping() 
+            await asyncio.sleep(60) 
+
+    asyncio.create_task(scheduled_ping_loop())
 
 
 if __name__ == "__main__":
